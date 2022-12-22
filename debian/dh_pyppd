@@ -1,0 +1,96 @@
+#!/usr/bin/perl -w
+
+=head1 NAME
+
+dh_pyppd - Compress the CUPS PPDs using pyppd.
+
+=cut
+
+use strict;
+use Debian::Debhelper::Dh_Lib;
+use File::Path;
+use File::Find;
+
+=head1 SYNOPSIS
+
+B<dh_pyppd> [--archive-filename=archvname] [S<I<debhelper options>>]
+
+=head1 DESCRIPTION
+
+B<dh_pyppd> is a debhelper program that compresses PPDs installed under
+/usr/share using pyppd, removes them from the binary package and adds the
+needed Depends to the package's ${misc:Depends}.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--archive-filename>=I<archvname>
+
+Use the specified pyppd archive filename instead of deriving it from the
+binary package name (by dropping printer-driver-). This is usually not
+needed.
+
+=back
+
+=cut
+
+init(options => {
+        "archive-filename=s" => \$dh{ARCHIVE_FILENAME},
+});
+
+foreach my $package (@{$dh{DOPACKAGES}}) {
+	my $tmp=tmpdir($package);
+	my $ppd_src="$tmp/usr/share/";
+	my $pyppd_dest="$tmp/usr/lib/cups/driver";
+	my $package_printer_driver=$package;
+	$package_printer_driver =~ s/^printer-driver-//;
+	# If archive-filename is specified, use that instead
+	if($dh{ARCHIVE_FILENAME}) {
+		$package_printer_driver = $dh{ARCHIVE_FILENAME};
+	}
+
+	if(-d $ppd_src) {
+		my $ppds_presence = 0;
+		find(sub { if(($_ =~ m/\.ppd(\.gz)?$/) ) {
+				$ppds_presence++;
+			   }
+			  }, "$ppd_src");
+
+		# fall back to debian/tmp as dh_install does
+	        if (! compat(6) && ! $ppds_presence) {
+			$ppd_src="debian/tmp/usr/share/";
+			find(sub { if(($_ =~ m/\.ppd(\.gz)?$/) ) {
+				$ppds_presence++;
+			   }
+			}, "$ppd_src");
+		}
+
+		if( $ppds_presence ) {
+			# verbose_print("PPDs found in $ppd_src.");
+
+			# verbose_print("Creating pyppd archive at $pyppd_dest/$package.");
+			mkpath($pyppd_dest);
+			doit("pyppd","--output=$pyppd_dest/$package_printer_driver","$ppd_src");
+
+			# verbose_print("Remove PPDs now in the archive.");
+			doit("find",$ppd_src,"-name","\*.ppd","-delete","-o","-name","\*.ppd.gz","-delete");
+
+			# verbose_print("Remove empty directories left.");
+			doit("find",$ppd_src,"-type","d","-empty","-delete");
+
+			# verbose_print("Add needed Depends in \${misc:Depends}");
+			addsubstvar($package,"misc:Depends", "xz-utils");
+			addsubstvar($package,"misc:Depends", "python3:any");
+		}
+		else {
+			# verbose_print("No PPDs found under $ppd_src.");
+		}
+	}
+}
+
+=head1 AUTHOR
+
+Didier Raboud <odyx@debian.org>
+
+=cut

@@ -1,0 +1,5 @@
+files
+*.substvars
+*.debhelper
+*.debhelper.log
+pyppd

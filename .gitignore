@@ -1,0 +1,10 @@
+build
+dist
+*.egg
+*.pyc
+*.egg-info
+*.so
+*.pyd
+*.swp
+CHANGES.txt
+MANIFEST

@@ -1,0 +1,29 @@
+Source: pyppd
+Maintainer: Debian Printing Group <debian-printing@lists.debian.org>
+Section: python
+Priority: optional
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-python,
+ python3-all,
+Standards-Version: 4.6.0
+Vcs-Browser: https://salsa.debian.org/printing-team/pyppd
+Vcs-Git: https://salsa.debian.org/printing-team/pyppd.git
+Homepage: https://github.com/OpenPrinting/pyppd/
+
+Package: pyppd
+Architecture: all
+Multi-Arch: foreign
+Depends:
+ xz-utils,
+ ${misc:Depends},
+ ${perl:Depends},
+ ${python3:Depends},
+ ${shlibs:Depends},
+Description: CUPS PostScript Printer Driver's compressor and generator
+ pyppd is a CUPS PPD generator. It holds an compressed archive of PPDs, which
+ can be listed and retrieved only when needed by CUPS, saving disk space.
+ .
+ This tool is mostly useful as build-dependency for printing driver packages.
+ For this use, it provides a Debian-specific dh_pyppd Debhelper addon that
+ handles the pyppd launch and the cleanup after it.
